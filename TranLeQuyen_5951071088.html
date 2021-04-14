@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Google Maps API Demo</title>
+    <style>
+        #map {
+            height: 100%;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #floating-panel {
+            position: absolute;
+            top: 10px;
+            right: 5%;
+            z-index: 5;
+            background-color: #fff;
+            padding: 5px;
+            border: 1px solid #999;
+            text-align: center;
+            font-family: "Roboto", "sans-serif";
+            line-height: 30px;
+            padding-right: 10px;
+        }
+    </style>
+    <script>
+        function initMap() {
+            const myLatlng = { "lat": 10.78007922183781,  "lng": 106.6999074971435 };
+           
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 10,
+                center: myLatlng,
+            });
+            // Create the initial InfoWindow.
+            let infoWindow = new google.maps.InfoWindow({
+                content: "Click the map to get Lat/Lng!",
+                position: myLatlng,
+            });
+            infoWindow.open(map);
+            // Configure the click listener.
+            map.addListener("click", (mapsMouseEvent) => {
+                // Close the current InfoWindow.
+                infoWindow.close();
+                // Create a new InfoWindow.
+                infoWindow = new google.maps.InfoWindow({
+                    position: mapsMouseEvent.latLng,
+                });
+                infoWindow.setContent(
+                    JSON.stringify(mapsMouseEvent.latLng.toJSON(), null, 2)
+                );
+                infoWindow.open(map);
+            });
+        }
+    </script>
+    <script>
+        const bd = { "lat": 10.78007922183781,  "lng": 106.6999074971435 };
+        const vmqtg = { "lat": 21.02743002916999,  "lng":105.83543737294757 }
+        function CenterControl(controlDiv, map) {
+            const controlUI = document.createElement("div");
+            controlUI.style.backgroundColor = "#fff";
+            controlUI.style.border = "2px solid #fff";
+            controlUI.style.borderRadius = "3px";
+            controlUI.style.boxShadow = "0 2px 6px rgba(0,0,0,.3)";
+            controlUI.style.cursor = "pointer";
+            controlUI.style.marginBottom = "22px";
+            controlUI.style.textAlign = "right";
+            controlUI.title = "Ấn vào để trở về Bưu điện trung tâm thành phố";
+            controlDiv.appendChild(controlUI);
+            const controlText = document.createElement("div");
+            controlText.style.color = "rgb(25,25,25)";
+            controlText.style.fontFamily = "Roboto,Arial,sans-serif";
+            controlText.style.fontSize = "16px";
+            controlText.style.lineHeight = "38px";
+            // controlText.style.paddingLeft = "5px";
+            // controlText.style.paddingRight = "5px";
+            controlText.innerHTML = "Bưu điện TTTP";
+            controlUI.appendChild(controlText);
+            controlUI.addEventListener("click", () => {
+                map.setCenter(bd);
+            });
+        }
+        
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom:14,
+                center: bd,
+                streetViewControl: true,
+                scaleControl: true,
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    //mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.HYBRID],
+                    //style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                    //position: google.maps.ControlPosition.TOP_CENTER
+                },
+                zoomControl: true,
+                zoomControlOptions: {
+                    //position: google.maps.ControlPosition.BOTTOM
+                },
+                fullscreenControl: true,
+                fullscreenControlOptions: {
+                    //position: google.maps.ControlPosition.BOTTOM_RIGHT
+                },
+            });
+            const centerControlDiv = document.createElement("div");
+            CenterControl(centerControlDiv, map);
+            map.controls[google.maps.ControlPosition.TOP_CENTER].push(
+                centerControlDiv);
+            const drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.MARKER,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [
+                    
+                        google.maps.drawing.OverlayType.CIRCLE,
+                        google.maps.drawing.OverlayType.POLYGON,
+                       
+                    ],
+                },
+               
+                circleOptions: {
+                    fillColor: "blue",
+                    fillOpacity: 0.1,
+                    strokeWeight: 5,
+                    clickable: false,
+                    editable: true,
+                    zIndex: 1,
+                },
+            });
+            drawingManager.setMap(map);
+            const marker = new google.maps.Marker({
+                position: bd,
+                title: "Bưu Điện Trung Tâm Thành Phố",
+                //label: "A",
+                map: map,
+                draggable: true,
+              
+                animation: google.maps.Animation.DROP,
+            });
+            const marker2 = new google.maps.Marker({
+                position:vmqtg,
+                title: "Văn Miếu Quốc Tử Giám",
+                //label: "B",
+                map: map,
+                draggable: true,
+        
+                animation: google.maps.Animation.DROP,
+            });
+          
+             const directionsService = new google.maps.DirectionsService();
+             const directionsRenderer = new google.maps.DirectionsRenderer();
+             directionsRenderer.setMap(map);
+
+             const onChangeHandler = function () {
+                 calculateAndDisplayRoute(directionsService, directionsRenderer);
+             };
+             document.getElementById("start").addEventListener("change", onChangeHandler);
+             document.getElementById("end").addEventListener("change", onChangeHandler);
+
+            function calculateAndDisplayRoute(directionsService, directionsRenderer) {
+            directionsService.route(
+                {
+                    origin: {
+                        query: document.getElementById("start").value,
+                    },
+                    destination: {
+                        query: document.getElementById("end").value,
+                    },
+                    travelMode: google.maps.TravelMode.DRIVING,
+                },
+                (response, status) => {
+                    if (status === "OK") {
+                        directionsRenderer.setDirections(response);
+                    } else { window.alert("Directions request failed due to " + status); }
+                }); 
+
+        }
+      
+
+// Add circle overlay and bind to marker
+var circle = new google.maps.Circle({
+  map: map,
+  radius: 3000,   
+  fillColor: '#AA0000'
+});
+circle.bindTo('center', marker, 'position');
+
+
+// Add circle overlay and bind to marker
+var circle = new google.maps.Circle({
+  map: map,
+  radius: 3100,   
+  fillColor: '#AA0000'
+});
+circle.bindTo('center', marker2, 'position');
+
+        google.maps.event.addListener(map, 'click', function (event) {
+                if (infowindow != null) {
+                    infowindow.close();
+                }
+                var strContent = "<b>Tọa độ của điểm này là -></b>"
+                strContent += "<br><b>Vĩ độ: </b>" + event.latlng.lat();
+                strContent += "<br><b>Kinh độ: </b>" + event.latlng.lng();
+            });
+            const contentString = 'BƯU ĐIỆN TRUNG TÂM THÀNH PHỐ ';
+            
+            const infowindow = new google.maps.InfoWindow({
+                content: contentString,
+                position: event.latlng
+            });
+            marker.addListener("click", () => {
+                infowindow.open(map, marker);
+            });
+            const contentString2 = 'VĂN MIẾU QUỐC TỬ GIÁM ';
+            const infowindow2 = new google.maps.InfoWindow({
+                content: contentString2,
+                position: event.latlng
+            });
+            marker2.addListener("click", () => {
+                infowindow2.open(map, marker2);
+            });
+        
+    }
+    </script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    
+</head>
+   
+<body>
+    <div id="floating-panel">
+        <b>Start: </b>
+        <select id="start">
+            <option value="Bưu Điện Trung Tâm Thành Phố">Bưu Điện Trung Tâm Thành Phố</option>
+            <option value="Văn Miếu Quốc Tử Giám">Văn Miếu Quốc Tử Giám</option>
+        </select>
+        <b>End: </b>
+        <select id="end">
+            <option value="Bưu Điện Trung Tâm Thành Phố">Bưu Điện Trung Tâm Thành Phố  </option>
+            <option value="Văn Miếu Quốc Tử Giám">Văn Miếu Quốc Tử Giám</option>
+        </select>
+    </div>
+
+    <!--The div element for the map -->
+    <div id="map"></div>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDc7PnOq3Hxzq6dxeUVaY8WGLHIePl0swY&callback=initMap&libraries=drawing&v=weekly"
+        async></script>
+</body>
+
+</html>
